@@ -2,6 +2,7 @@ import struct
 import requests
 import base64
 import commons
+import subprocess
 
 
 def get_basic_info():
@@ -30,7 +31,12 @@ def get_basic_info():
         burned_amount,
         game_operator_bytes,
     ) = unpacked_data
-    game_operator = base64.b32encode(game_operator_bytes).decode('ascii')
+
+    node_command = ["node", "converter.js"] + [str(b) for b in game_operator_bytes]
+
+    result = subprocess.run(node_command, capture_output=True, text=True)
+
+    game_operator_string = result.stdout.strip()
 
     print("feePerSlotPerHour:", fee_per_slot_per_hour)
     print("gameOperatorFee:", game_operator_fee)
@@ -47,7 +53,13 @@ def get_basic_info():
     print("earnedAmountForBetWinner:", earned_amount_for_bet_winner)
     print("distributedAmount:", distributed_amount)
     print("burnedAmount:", burned_amount)
-    print("gameOperator:", game_operator) # This one is currently wrong !!!!!!! [TODO]: Make it right
+    print("gameOperator:", game_operator_string)
+
+    expected_game_operator_string = "KSWMTEIAYCLGXCDEXWZWFXUUGSGCTTZUIINDTYCNZABBJHVCBYEPFWXFIPBF"
+    assert game_operator_string == expected_game_operator_string, f"Decoded game operator string '" \
+                                                                  f"{game_operator_string}" \
+                                                                  f"' does not match expected '" \
+                                                                  f"{expected_game_operator_string}'"
 
 
 if __name__ == "__main__":
